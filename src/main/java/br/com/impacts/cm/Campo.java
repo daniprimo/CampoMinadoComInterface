@@ -1,6 +1,4 @@
-package br.com.impacto.cm;
-
-import br.com.impacto.cm.excessao.ExplosaoException;
+package br.com.impacts.cm;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,9 +14,25 @@ public class Campo {
 
     private List<Campo> vizinhos = new ArrayList<>();
 
+    //com interface
+    private List<CampoObservador> observadores =
+            new ArrayList<>();
+    //sem interface
+//    private List<BiConsumer<Campo, CampoEvento>> observadores2 =
+//            new ArrayList<>();
     Campo(int linha, int coluna){
         this.LINHA = linha;
         this.COLUNA = coluna;
+    }
+
+    public void registrarObservador (CampoObservador observador){
+        observadores.add(observador);
+    }
+
+
+    public void notificarObservadores (CampoEvento evento) {
+        observadores.stream()
+                .forEach(o -> o.eventoOcorreu(this, evento));
     }
 
     boolean adicionarVizinho(Campo vizinho){
@@ -44,15 +58,23 @@ public class Campo {
     void alternarMarcacao () {
         if (!aberto){
             marcado = !marcado;
+            if (marcado){
+                notificarObservadores(CampoEvento.MARCAR);
+            }else {
+                notificarObservadores(CampoEvento.DESMARCAR);
+            }
         }
     }
 
     boolean abrir (){
         if (!aberto && !marcado){
-            aberto = true;
             if (minado){
-                throw new ExplosaoException();
+                notificarObservadores(CampoEvento.EXPLODIR);
+                return true;
             }
+
+            setAberto(true);
+
             if (vizinhancaSegura()){
                 vizinhos.forEach(v -> v.abrir());
             }
@@ -81,6 +103,9 @@ public class Campo {
 
     void setAberto (Boolean aberto){
         this.aberto = aberto;
+        if (aberto){
+            notificarObservadores(CampoEvento.ABRIR);
+        }
 
     }
 
@@ -115,20 +140,4 @@ public class Campo {
 
     }
 
-    @Override
-    public String toString() {
-        if (marcado){
-            return "x";
-        }else if (aberto && minado){
-            return "*";
-        }else if (aberto && minasNaVizinhanca() > 0){
-            return Long.toString(minasNaVizinhanca());
-        }else if (aberto){
-            return " ";
-        }else {
-            return "?";
-        }
-
-
-    }
 }

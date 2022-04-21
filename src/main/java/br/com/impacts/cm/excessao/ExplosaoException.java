@@ -1,4 +1,4 @@
-package br.com.impacto.cm.excessao;
+package br.com.impacts.cm.excessao;
 
 public class ExplosaoException extends RuntimeException {
 
